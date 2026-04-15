@@ -1,12 +1,13 @@
 struct Solution;
 
-struct WordsForward {
-    arr: Vec<String>,
-    idx: usize,
+enum Direction {
+    Forward,
+    Backward,
 }
-struct WordsBackward {
+struct WordsIter {
     arr: Vec<String>,
     idx: usize,
+    direction: Direction
 }
 
 struct Words {
@@ -19,64 +20,42 @@ impl Words {
             arr: words.to_vec(),
         }
     }
-    pub fn forward(&self, start_idx: usize) -> WordsForward {
-        WordsForward::new(&self.arr, start_idx)
+    pub fn forward(&self, start_idx: usize) -> WordsIter {
+        WordsIter::new(&self.arr, start_idx, Direction::Forward)
     }
-    pub fn backward(&self, start_idx: usize) -> WordsBackward {
-        WordsBackward::new(&self.arr, start_idx)
+    pub fn backward(&self, start_idx: usize) -> WordsIter {
+        WordsIter::new(&self.arr, start_idx, Direction::Backward)
     }
 }
 
-impl WordsForward {
-    fn new(words: &[String], start_idx: usize) -> Self {
+impl WordsIter {
+    fn new(words: &[String], start_idx: usize, direction: Direction) -> Self {
         Self {
             idx: start_idx,
             arr: words.to_vec(),
+            direction,
         }
     }
     fn get_target(self, target: &str) -> Vec<usize> {
         self
             .enumerate()
-            .filter(|(i, s)| s == target)
-            .map(|(i, _)| i)
-            .collect()
-    }
-}
-impl WordsBackward {
-    fn new(words: &[String], start_idx: usize) -> Self {
-        Self {
-            idx: start_idx,
-            arr: words.to_vec(),
-        }
-    }
-    fn get_target(self, target: &str) -> Vec<usize> {
-        self
-            .enumerate()
-            .filter(|(i, s)| s == target)
+            .filter(|(_, s)| s == target)
             .map(|(i, _)| i)
             .collect()
     }
 }
 
-impl Iterator for WordsForward {
-    type Item = String;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let curr = &self.arr[(self.idx + 1) % self.arr.len()];
-        self.idx += 1;
-        if self.idx > self.arr.len() {
-            return None;
-        }
-        Some(curr.to_string())
-    }
-}
-impl Iterator for WordsBackward {
+impl Iterator for WordsIter {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
         let i = self.idx;
         let n = self.arr.len();
-        let curr = &self.arr[(i + n - 1) % n];
+
+        let curr = match self.direction {
+            Direction::Forward => &self.arr[(i + 1) % n],
+            Direction::Backward => &self.arr[(i + n - 1) % n],
+        };
         self.idx += 1;
         if self.idx > self.arr.len() {
             return None;
@@ -112,7 +91,6 @@ mod test {
 
     #[test]
     fn case_1() {
-        println!("Case 1");
         let words = ["hello", "i", "am", "leetcode", "hello"]
             .into_iter()
             .map(|s| s.to_string())
@@ -125,7 +103,6 @@ mod test {
 
     #[test]
     fn case_2() {
-        println!("Case 2");
         let words = ["a", "b", "leetcode"]
             .into_iter()
             .map(|s| s.to_string())
@@ -138,7 +115,6 @@ mod test {
 
     #[test]
     fn case_3() {
-        println!("Case 3");
         let words = ["i", "eat", "leetcode"]
             .into_iter()
             .map(|s| s.to_string())
