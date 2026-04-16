@@ -1,9 +1,12 @@
+#![allow(dead_code)]
 struct Solution;
 
+#[derive(Debug)]
 enum Direction {
     Forward,
     Backward,
 }
+#[derive(Debug)]
 struct WordsIter {
     arr: Vec<String>,
     idx: usize,
@@ -24,7 +27,8 @@ impl Words {
         WordsIter::new(&self.arr, start_idx, Direction::Forward)
     }
     pub fn backward(&self, start_idx: usize) -> WordsIter {
-        WordsIter::new(&self.arr, start_idx, Direction::Backward)
+        let back = WordsIter::new(&self.arr, start_idx, Direction::Backward);
+        back
     }
 }
 
@@ -40,7 +44,7 @@ impl WordsIter {
         self
             .enumerate()
             .filter(|(_, s)| s == target)
-            .map(|(i, _)| i)
+            .map(|(i, _)| i + 1)
             .collect()
     }
 }
@@ -50,16 +54,20 @@ impl Iterator for WordsIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         let i = self.idx;
+        self.idx += 1;
+
+        if self.idx > self.arr.len() {
+            return None;
+        }
+
         let n = self.arr.len();
 
         let curr = match self.direction {
             Direction::Forward => &self.arr[(i + 1) % n],
             Direction::Backward => &self.arr[(i + n - 1) % n],
         };
-        self.idx += 1;
-        if self.idx > self.arr.len() {
-            return None;
-        }
+
+
         Some(curr.to_string())
     }
 }
@@ -79,7 +87,7 @@ impl Solution {
         idx.append(&mut idx_reverse);
 
         match idx.iter().min() {
-            Some(u) => i32::try_from(*u).unwrap() + 1,
+            Some(u) => i32::try_from(*u).unwrap(),
             None => -1,
         }
     }
@@ -124,4 +132,35 @@ mod test {
         let solution = Solution::closest_target(words, target, start_index);
         assert_eq!(solution, -1)
     }
+
+    #[test]
+    fn case_4() {
+        let words = ["ibkgecmeyx","jsdkekkjsb","gdjgdtjtrs","jsdkekkjsb","jsdkekkjsb","jsdkekkjsb","gdjgdtjtrs","msjlfpawbx","pbgjhutcwb","gdjgdtjtrs"]
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect();
+        let target = String::from("pbgjhutcwb");
+        let start_index = 0;
+        let solution = Solution::closest_target(words, target, start_index);
+        assert_eq!(solution, 2)
+    }
+    
+    #[test]
+    fn reverse_iter() {
+        let words: Vec<String> = ["a", "b", "c", "d", "f"]
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect();
+        let words_reversed: Vec<String> = Words::new(&words)
+            .backward(0)
+            .collect();
+
+        let byhand: Vec<String> = ["a", "f", "d", "c", "b"]
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect();
+
+        assert_eq!(words_reversed, byhand)
+    }
+    
 }
