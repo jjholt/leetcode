@@ -1,88 +1,21 @@
 #![allow(dead_code)]
 struct Solution;
 
-#[derive(Debug)]
-enum Direction {
-    Forward,
-    Backward,
-}
-#[derive(Debug)]
-struct WordsIter {
-    arr: Vec<String>,
-    idx: usize,
-    direction: Direction,
-    remaining: usize,
-}
-
-struct Words {
-    arr: Vec<String>,
-}
-
-impl Words {
-    pub fn new(words: &[String]) -> Self {
-        Self {
-            arr: words.to_vec(),
-        }
-    }
-    pub fn forward(&self, start_idx: usize) -> WordsIter {
-        WordsIter::new(&self.arr, start_idx, Direction::Forward)
-    }
-    pub fn backward(&self, start_idx: usize) -> WordsIter {
-        let back = WordsIter::new(&self.arr, start_idx, Direction::Backward);
-        back
-    }
-}
-
-impl WordsIter {
-    fn new(words: &[String], start_idx: usize, direction: Direction) -> Self {
-        Self {
-            idx: start_idx,
-            arr: words.to_vec(),
-            direction,
-            remaining: words.len(),
-        }
-    }
-    fn get_target(self, target: &str) -> Vec<usize> {
-        self
-            .enumerate()
-            .filter(|(_, s)| s == target)
-            .map(|(i, _)| i + 1)
-            .collect()
-    }
-}
-
-impl Iterator for WordsIter {
-    type Item = String;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let i = self.idx;
-
-        let n = self.arr.len();
-
-        self.idx = match self.direction {
-            Direction::Forward => (i + 1) % n,
-            Direction::Backward => (i + n - 1) % n,
-        };
-
-        let curr = &self.arr[self.idx];
-
-        if self.remaining == 0 {
-            return None;
-        }
-
-        self.remaining -= 1;
-        Some(curr.to_string())
-    }
-}
+use crate::circular_iter::CircularArray;
 
 impl Solution {
     pub fn closest_target(words: Vec<String>, target: String, start_index: i32) -> i32 {
         let start_idx = usize::try_from(start_index).unwrap();
-        let idx_forward: Vec<usize> = Words::new(&words)
+
+        if words[start_idx] == target {
+            return 0
+        }
+
+        let idx_forward: Vec<usize> = CircularArray::new(&words)
             .forward(start_idx)
             .get_target(&target);
 
-        let mut idx_reverse: Vec<usize> = Words::new(&words)
+        let mut idx_reverse: Vec<usize> = CircularArray::new(&words)
             .backward(start_idx)
             .get_target(&target);
 
@@ -97,7 +30,7 @@ impl Solution {
 }
 
 #[cfg(test)]
-mod test {
+mod shorted_distance {
     use super::*;
 
     #[test]
@@ -147,14 +80,14 @@ mod test {
         let solution = Solution::closest_target(words, target, start_index);
         assert_eq!(solution, 2)
     }
-    
+
     #[test]
     fn reverse_iter() {
         let words: Vec<String> = ["a", "b", "c", "d", "f"]
             .into_iter()
             .map(|s| s.to_string())
             .collect();
-        let words_reversed: Vec<String> = Words::new(&words)
+        let words_reversed: Vec<String> = CircularArray::new(&words)
             .backward(1)
             .collect();
 
@@ -164,6 +97,18 @@ mod test {
             .collect();
 
         assert_eq!(words_reversed, byhand)
+    }
+
+    #[test]
+    fn case_5() {
+        let words = ["pgmiltbptl","jnkxwutznb","bmeirwjars","ugzyaufzzp","pgmiltbptl","sfhtxkmzwn","pgmiltbptl","pgmiltbptl","onvmgvjhxa","jyzdtwbwqp"]
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect();
+        let target = String::from("pgmiltbptl");
+        let start_index = 4;
+        let solution = Solution::closest_target(words, target, start_index);
+        assert_eq!(solution, 0)
     }
     
 }
