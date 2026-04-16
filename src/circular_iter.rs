@@ -39,8 +39,8 @@ impl <T: Clone> CircularArrayIter<T> {
     }
 }
 
-impl CircularArrayIter<String> {
-    pub fn get_target(self, target: &str) -> Vec<usize> {
+impl <T: PartialEq + Clone> CircularArrayIter<T> {
+    pub fn get_target(self, target: &T) -> Vec<usize> {
         self
             .enumerate()
             .filter(|(_, s)| s == target)

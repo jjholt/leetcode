@@ -30,7 +30,7 @@ impl Solution {
 }
 
 #[cfg(test)]
-mod shorted_distance {
+mod test_cases {
     use super::*;
 
     #[test]
