@@ -10,7 +10,8 @@ enum Direction {
 struct WordsIter {
     arr: Vec<String>,
     idx: usize,
-    direction: Direction
+    direction: Direction,
+    remaining: usize,
 }
 
 struct Words {
@@ -38,6 +39,7 @@ impl WordsIter {
             idx: start_idx,
             arr: words.to_vec(),
             direction,
+            remaining: words.len(),
         }
     }
     fn get_target(self, target: &str) -> Vec<usize> {
@@ -54,20 +56,21 @@ impl Iterator for WordsIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         let i = self.idx;
-        self.idx += 1;
-
-        if self.idx > self.arr.len() {
-            return None;
-        }
 
         let n = self.arr.len();
 
-        let curr = match self.direction {
-            Direction::Forward => &self.arr[(i + 1) % n],
-            Direction::Backward => &self.arr[(i + n - 1) % n],
+        self.idx = match self.direction {
+            Direction::Forward => (i + 1) % n,
+            Direction::Backward => (i + n - 1) % n,
         };
 
+        let curr = &self.arr[self.idx];
 
+        if self.remaining == 0 {
+            return None;
+        }
+
+        self.remaining -= 1;
         Some(curr.to_string())
     }
 }
@@ -152,7 +155,7 @@ mod test {
             .map(|s| s.to_string())
             .collect();
         let words_reversed: Vec<String> = Words::new(&words)
-            .backward(0)
+            .backward(1)
             .collect();
 
         let byhand: Vec<String> = ["a", "f", "d", "c", "b"]
