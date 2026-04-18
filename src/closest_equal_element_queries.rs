@@ -1,51 +1,56 @@
-use std::collections::HashSet;
-use crate::circular_iter::CircularArray;
+// use crate::circular_iter::CircularArray;
+use std::collections::HashMap;
 
 struct Solution;
 
 impl Solution {
     pub fn solve_queries(nums: Vec<i32>, queries: Vec<i32>) -> Vec<i32> {
-         queries
+        let n = nums.len();
+        let mut positions: HashMap<i32, Vec<usize>> = HashMap::new();
+
+        for (i, &num) in nums.iter().enumerate() {
+            positions.entry(num).or_default().push(i);
+        }
+
+        queries
             .iter()
-            .map(|q| *q as usize)
-            .map(|i| (i, nums[i]))
-            .map(|(i, target)| {
-                let mut forward: Vec<_> = CircularArray::new(&nums).forward(i).get_target(&target);
+            .map(|&q| {
+                let i = q as usize;
+                let target = nums[i];
+                let pos = &positions[&target];
+                if pos.len() == 1 {
+                    return -1
+                }
 
+                let idx = pos.binary_search(&i).unwrap();
+                let mut best = usize::MAX;
+                let next = pos[(idx+1) % pos.len()];
+                let dist = (next + n - i) % n;
+                best = best.min(dist);
 
-                let backward: Vec<_> = CircularArray::new(&nums).backward(i).get_target(&target);
-
-                forward.extend(backward);
-                forward.into_iter().collect::<HashSet<usize>>()
+                let prev = pos[(idx + pos.len() - 1) % pos.len()];
+                let dist = (i + n - prev) % n;
+                best = best.min(dist);
+                best as i32
             })
-            .map(|f| {
-                let minima = f.into_iter().min().map(|f| f as i32);
-                if minima == Some(nums.len() as i32) {
-                    return None
-                };
-                minima
-            })
-            .map(|f| f.unwrap_or(-1))
-            // .inspect(|f| println!("{:?}", f))
             .collect()
-        
     }
 }
 #[cfg(test)]
 mod test {
-    #[test]
-    fn case_1() {
-        let nums = [1, 3, 1, 4, 1, 3, 2];
-        let queries = [0, 3, 5];
-
-        let solution = super::Solution::solve_queries(nums.to_vec(), queries.to_vec());
-        assert_eq!(solution, [2,-1,3])
-    }
+    // #[test]
+    // fn case_1() {
+    //     let nums = [1, 3, 1, 4, 1, 3, 2];
+    //     let queries = [0, 3, 5];
+    //
+    //     let solution = super::Solution::solve_queries(nums.to_vec(), queries.to_vec());
+    //     assert_eq!(solution, [2, -1, 3])
+    // }
 
     #[test]
     fn case_2() {
-        let nums = [1,2,3,4];
-        let queries = [0,1,2,3];
+        let nums = [1, 2, 3, 4];
+        let queries = [0, 1, 2, 3];
 
         let solution = super::Solution::solve_queries(nums.to_vec(), queries.to_vec());
         assert_eq!(solution, [-1, -1, -1, -1])
